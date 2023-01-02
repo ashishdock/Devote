@@ -10,6 +10,7 @@ import SwiftUI
 
 struct NewTaskItemView: View {
     //MARK: - PROPERTIES
+    @AppStorage("isDarkMode") private var isDarkMode: Bool = false
     @State var task: String = ""
     @Environment(\.managedObjectContext) private var viewContext
     @Binding var isShowing: Bool
@@ -51,16 +52,19 @@ struct NewTaskItemView: View {
             Spacer()
             VStack(spacing: 16) {
                 TextField("New Task", text: $task) // Saving the text field to task varibale
-                    .foregroundColor(.pink)
+                    .foregroundColor(.blue)
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .padding()
                     .background(
-                        Color(UIColor.systemGray6)
+                        Color(isDarkMode ? UIColor.tertiarySystemBackground : UIColor.systemGray6)
+//                        Color(isDarkMode: UIColor.systemGray6)
                     )
                     .cornerRadius(10)
                 
                 Button {
                     addItem()
+                    playSound(sound: "sound-ding", type: "mp3")
+                    feedback.notificationOccurred(UINotificationFeedbackGenerator.FeedbackType.success)
                 } label: {
                     Spacer()
                     Text("SAVE")
@@ -70,17 +74,25 @@ struct NewTaskItemView: View {
                     Spacer()
                 }
                 .disabled(isButtonDisabled)
+                .onTapGesture {
+                    if isButtonDisabled {
+                        playSound(sound: "sound-tap", type: "mp3")
+                    }
+                }
                 .padding()
                 .font(.headline)
                 .foregroundColor(.white)
-                .background(isButtonDisabled ? Color.gray : Color.pink)
+                .background(isButtonDisabled ? Color.gray : Color.blue)
                 .cornerRadius(10)
                 
             } //: VSTACK - NEW TASK TEXT FIELD and BUTTON
             .padding(.horizontal)
             .padding(.vertical, 20)
+//            .background(
+//                Color.white
+//            )
             .background(
-                Color.white
+                isDarkMode ? Color(UIColor.secondarySystemBackground) : Color.white
             )
             .cornerRadius(16)
             .shadow(color: .blue.opacity(0.65), radius: 24)

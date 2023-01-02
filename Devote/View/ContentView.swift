@@ -12,7 +12,7 @@ struct ContentView: View {
     //MARK: - PROPERTIES
     @State var task: String = ""
     @State private var showNewTaskItem: Bool = false
-    
+    @AppStorage("isDarkMode") private var isDarkMode: Bool = false
     
     //MARK: - FETCHING DATA
     
@@ -38,6 +38,7 @@ struct ContentView: View {
                 fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
             }
         }
+        playSound(sound: "sound-ding", type: "mp3")
     }
     
     
@@ -50,11 +51,45 @@ struct ContentView: View {
                 VStack{
                     //MARK: HEADER
                     
+                    HStack(spacing: 10){
+                        //TITLE
+                        Text("Devote")
+                            .font(.system(.largeTitle, design: .rounded))
+                            .fontWeight(.heavy)
+                            .padding(.leading, 4)
+                        
+                        Spacer()
+                        //EDIT BUTTON
+                        EditButton()
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .padding(.horizontal, 10)
+                            .frame(minWidth: 70, minHeight: 24)
+                            .background(Capsule().stroke(Color.white, lineWidth: 2))
+                        // APPEARANCE BUTTON
+                        Button {
+                            //TOGGLE APPEARANCE
+                            isDarkMode.toggle()
+                            playSound(sound: "sound-tap", type: "mp3")
+                            feedback.notificationOccurred(UINotificationFeedbackGenerator.FeedbackType.success)
+                        } label: {
+                            Image(systemName: isDarkMode ? "sun.max.fill" : "moon.circle.fill")
+                                .resizable()
+                                .frame(width: 24, height: 24)
+                                .font(.system(.title, design: .rounded))
+                        }
+
+                        
+                    } //: HSTACK
+                    .padding()
+                    .foregroundColor(.white)
+                    
                     Spacer(minLength: 80)
                     //: NEW TASK ITEM
                     
                     Button {
                         showNewTaskItem = true
+                        playSound(sound: "sound-ding", type: "mp3")
+                        feedback.notificationOccurred(UINotificationFeedbackGenerator.FeedbackType.success)
                     } label: {
                         Image(systemName: "plus.circle")
                             .font(.system(size: 30, weight: .semibold, design: .rounded))
@@ -77,23 +112,28 @@ struct ContentView: View {
                         ForEach(items) { item in
                             NavigationLink {
                                 // This is the view to which the Navigation link will lead to.
+//
+                                
+// This is the old view, the boave is the new view
                                 VStack(alignment: .leading) {
                                     Text(item.task ?? "")
                                         .font(.headline)
                                         .fontWeight(.bold)
                                     Text("Item at \(item.timestamp!, formatter: itemFormatter)")
-                                    
+                                    Text(item.completion ? "Status: Complete" : "Status: Pending")
+
                                     //                                Text('Completion Status: \(item.completion ? "Complete" : "Pending")')
                                 } //: VSTACK List Item
                             } label: { //Navigation link to the nextview after selecting a list item
-                                VStack(alignment: .leading){
-                                    Text(item.task ?? "")
-                                        .font(.headline)
-                                        .fontWeight(.bold)
-                                    Text(item.timestamp!, formatter: itemFormatter)
-                                        .font(.footnote)
-                                        .foregroundColor(.gray)
-                                }
+                            ListRowItemView(item: item)
+//                                VStack(alignment: .leading){
+//                                    Text(item.task ?? "")
+//                                        .font(.headline)
+//                                        .fontWeight(.bold)
+//                                    Text(item.timestamp!, formatter: itemFormatter)
+//                                        .font(.footnote)
+//                                        .foregroundColor(.gray)
+//                                }
                             } //Navigation link to the nextview after selecting a list item
                         } //: FOREACH - List all items
                         .onDelete(perform: deleteItems)
@@ -103,10 +143,13 @@ struct ContentView: View {
                     .padding(.vertical, 0)
                     .frame(maxWidth: 640)
                 } //: VSTACK
-                
+                .blur(radius: showNewTaskItem ? 8.0 : 0, opaque: false)
+                .transition(SwiftUI.AnyTransition.move(edge: Edge.bottom))
+                .animation(SwiftUI.Animation.easeOut(duration: 0.5), value: showNewTaskItem)
                 //: MARK NEW TASK ITEM
                 if showNewTaskItem {
-                    BlankView()
+                    BlankView(backgroundColor: isDarkMode ? .black : .gray,
+                              backgroundOpacity: isDarkMode ? 0.3 : 0.5)
                         .onTapGesture {
                             withAnimation {
                                 showNewTaskItem = false
@@ -120,22 +163,16 @@ struct ContentView: View {
                 UITableView.appearance().backgroundColor = UIColor.clear
             })
             .navigationBarTitle("Daily Tasks", displayMode: NavigationBarItem.TitleDisplayMode.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-//                ToolbarItem {
-//                    Button(action: addItem) {
-//                        Label("Add Item", systemImage: "plus")
-//                    }
-//                } //: TOOLBAR ITEM
-            } //: VSTACK - TOOLBAR
-            .background(BackgroundImageView()) // it's a png and will overlap the background gradient
+            .navigationBarHidden(true)
+            
+            .background( // it's a png and will overlap the background gradient
+                BackgroundImageView()
+                    .blur(radius: showNewTaskItem ? 8 : 0, opaque: false)
+            )
             .background(backgroundGradient.ignoresSafeArea(.all))
         } //: NAVIGATION VIEW
         .navigationViewStyle(StackNavigationViewStyle())
     } //: BODY
-
 }
 
 
